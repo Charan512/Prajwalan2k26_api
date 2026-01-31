@@ -33,24 +33,45 @@ router.get('/teams', async (req, res) => {
 // @access  Admin
 router.get('/teams/:teamId', async (req, res) => {
     try {
+        console.log('Fetching team with ID:', req.params.teamId);
+
         const team = await Team.findById(req.params.teamId)
             .populate('leadId', 'name email')
-            .populate('scores.round1.evaluatorId', 'name')
-            .populate('scores.round2.evaluatorId', 'name')
-            .populate('scores.round3.evaluatorId', 'name')
-            .populate('scores.round4.evaluatorId', 'name');
+            .populate('scores.round1.evaluations.evaluatorId', 'name email')
+            .populate('scores.round2.evaluations.evaluatorId', 'name email')
+            .populate('scores.round3.evaluations.evaluatorId', 'name email')
+            .populate('scores.round4.evaluations.evaluatorId', 'name email')
+            .lean(); // Convert to plain JavaScript object for better performance
 
         if (!team) {
+            console.log('Team not found:', req.params.teamId);
             return res.status(404).json({ success: false, message: 'Team not found' });
         }
 
+        console.log('Team found:', team.teamName);
         res.json({
             success: true,
             data: team
         });
     } catch (error) {
         console.error('Get team error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Stack trace:', error.stack);
+
+        // Check if it's a MongoDB CastError (invalid ObjectId format)
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid team ID format'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
