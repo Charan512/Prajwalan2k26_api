@@ -36,10 +36,9 @@ const authLimiter = rateLimit({
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.TIMER_URL,
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://prajwalan2k26-ui.vercel.app',
-  '*' // Allow timer website (you can replace with specific domain later)
 ].filter(Boolean);
 
 app.use(cors({
