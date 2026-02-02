@@ -217,7 +217,7 @@ teamSchema.pre('save', function (next) {
 });
 
 // Indexes for performance optimization
-teamSchema.index({ teamNumber: 1 }); // For quick team number lookups
+// Note: teamNumber index is created automatically by unique: true
 teamSchema.index({ domain: 1 }); // For domain-based filtering
 teamSchema.index({ totalScore: -1 }); // For leaderboard sorting
 teamSchema.index({ isFlashRoundSelected: 1 }); // For Flash Round queries

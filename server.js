@@ -12,6 +12,9 @@ connectDB();
 
 const app = express();
 
+// Trust proxy - Required for rate limiting to work behind Render's reverse proxy
+app.set('trust proxy', 1);
+
 // Rate limiting configuration
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

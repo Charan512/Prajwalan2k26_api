@@ -68,7 +68,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Indexes for performance optimization
-userSchema.index({ email: 1 }); // For login lookups
+// Note: email index is created automatically by unique: true
 userSchema.index({ role: 1, domain: 1 }); // For role and domain filtering
 
 module.exports = mongoose.model('User', userSchema);
