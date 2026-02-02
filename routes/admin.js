@@ -275,9 +275,11 @@ router.get('/leaderboard', async (req, res) => {
         res.json({
             success: true,
             data: teams.map((team, index) => ({
+                _id: team._id,
                 rank: index + 1,
                 teamName: team.teamName,
                 teamNumber: team.teamNumber,
+                domain: team.domain,
                 totalScore: team.totalScore,
                 scores: team.scores,
                 isFlashRoundSelected: team.isFlashRoundSelected

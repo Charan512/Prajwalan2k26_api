@@ -35,7 +35,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://prajwalan2k26-ui.vercel.app'
+  'https://prajwalan2k26-ui.vercel.app',
+  '*' // Allow timer website (you can replace with specific domain later)
 ].filter(Boolean);
 
 app.use(cors({
@@ -65,6 +66,7 @@ app.use('/api/auth', authLimiter, require('./routes/auth')); // Stricter limit f
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/evaluator', require('./routes/evaluator'));
 app.use('/api/teamlead', require('./routes/teamlead'));
+app.use('/api/timer', require('./routes/timer')); // Timer routes for countdown
 
 // Health check
 app.get('/api/health', (req, res) => {
