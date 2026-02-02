@@ -17,8 +17,7 @@ const timerSchema = new mongoose.Schema({
         default: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
     },
     endTime: {
-        type: Date,
-        required: true
+        type: Date
     },
     isActive: {
         type: Boolean,
