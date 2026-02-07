@@ -184,6 +184,7 @@ router.post('/teams/:teamId/score/:round',
                 evaluatorName: req.user.name,
                 evaluatorType: req.user.evaluatorType || 'staff',
                 score: score,
+                parameters: req.body.parameters || {},
                 feedback: feedback || '',
                 evaluatedAt: new Date()
             };

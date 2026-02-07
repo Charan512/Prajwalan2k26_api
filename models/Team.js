@@ -37,6 +37,12 @@ const evaluationSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    // Parameter breakdown for detailed evaluation
+    parameters: {
+        type: Map,
+        of: Number,
+        default: {}
+    },
     feedback: {
         type: String,
         default: ''
@@ -128,15 +134,15 @@ const teamSchema = new mongoose.Schema({
         },
         round2: {
             type: scoreSchema,
-            default: { evaluations: [], finalScore: null, maxScore: 20 }
+            default: { evaluations: [], finalScore: null, maxScore: 25 }
         },
         round3: {
             type: scoreSchema,
-            default: { evaluations: [], finalScore: null, maxScore: 50 }
+            default: { evaluations: [], finalScore: null, maxScore: 45 }
         },
         round4: {
             type: scoreSchema,
-            default: { evaluations: [], finalScore: null, maxScore: 0 }
+            default: { evaluations: [], finalScore: null, maxScore: 10 }
         }
     },
     totalScore: {
