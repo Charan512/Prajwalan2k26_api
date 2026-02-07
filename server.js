@@ -69,6 +69,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/evaluator', require('./routes/evaluator'));
 app.use('/api/teamlead', require('./routes/teamlead'));
 app.use('/api/timer', require('./routes/timer')); // Timer routes for countdown
+app.use('/api/game', require('./routes/game')); // Game scores and leaderboard
 
 // Health check
 app.get('/api/health', (req, res) => {
