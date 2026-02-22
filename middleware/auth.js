@@ -9,6 +9,18 @@ const protect = async (req, res, next) => {
         try {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+            // Stateless admin — no DB record, synthesize from .env
+            if (decoded.id === 'env-admin-only') {
+                req.user = {
+                    _id: 'env-admin-only',
+                    name: 'Admin',
+                    email: process.env.ADMIN_EMAIL,
+                    role: 'admin'
+                };
+                return next();
+            }
+
             req.user = await User.findById(decoded.id);
 
             if (!req.user) {

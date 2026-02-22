@@ -20,6 +20,6 @@ services:
       - key: PORT
         value: 5001
       - key: FRONTEND_URL
-        value: https://prajwalan2k26-ui.vercel.app
+        value: https://finale.prajwalan-2k26.tech
       - key: TIMER_URL
-        value: https://timer-pi-three.vercel.app
+        value: https://prajwalan-timer.vercel.app

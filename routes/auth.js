@@ -7,6 +7,9 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Hardcoded admin ID — admin is stateless, no DB record needed
+const ADMIN_ID = 'env-admin-only';
+
 // Generate JWT Token
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -41,28 +44,16 @@ router.post('/login',
                 return res.status(400).json({ success: false, message: 'Please provide email and password' });
             }
 
-            // Check if it's admin login (from .env)
+            // Admin login — stateless, credentials from .env only
             if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-                // Find or create admin user
-                let admin = await User.findOne({ email: process.env.ADMIN_EMAIL });
-
-                if (!admin) {
-                    admin = await User.create({
-                        email: process.env.ADMIN_EMAIL,
-                        password: process.env.ADMIN_PASSWORD,
-                        name: 'Admin',
-                        role: 'admin'
-                    });
-                }
-
                 return res.json({
                     success: true,
                     data: {
-                        _id: admin._id,
-                        name: admin.name,
-                        email: admin.email,
-                        role: admin.role,
-                        token: generateToken(admin._id)
+                        _id: ADMIN_ID,
+                        name: 'Admin',
+                        email: process.env.ADMIN_EMAIL,
+                        role: 'admin',
+                        token: generateToken(ADMIN_ID)
                     }
                 });
             }
