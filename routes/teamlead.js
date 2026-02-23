@@ -31,6 +31,10 @@ router.get('/dashboard', async (req, res) => {
             data: {
                 teamName: team.teamName,
                 teamNumber: team.teamNumber,
+                leadId: {
+                    name: req.user.name,
+                    email: req.user.email
+                },
                 members: team.members,
                 tasks: visibleTasks,
                 isFlashRoundSelected: team.isFlashRoundSelected
