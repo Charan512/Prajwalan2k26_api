@@ -244,4 +244,100 @@ router.get('/flash-round-teams', async (req, res) => {
     }
 });
 
+// @route   PUT /api/evaluator/teams/:teamId/tasks/:round
+// @desc    Update tasks for a team's round (Student Evaluators only)
+// @access  Evaluator (Student)
+router.put('/teams/:teamId/tasks/:round', async (req, res) => {
+    try {
+        if (req.user.evaluatorType !== 'student') {
+            return res.status(403).json({ success: false, message: 'Only student evaluators can manage tasks' });
+        }
+
+        const { teamId, round } = req.params;
+        const { tasks } = req.body;
+
+        const validRounds = ['round1', 'round2', 'round3', 'round4'];
+        if (!validRounds.includes(round)) {
+            return res.status(400).json({ success: false, message: 'Invalid round' });
+        }
+
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).json({ success: false, message: 'Team not found' });
+        }
+
+        if (req.user.domain && team.domain !== req.user.domain) {
+            return res.status(403).json({ success: false, message: 'This team is not in your assigned domain' });
+        }
+
+        if (!team.tasks) team.tasks = {};
+
+        // Update tasks for the specified round
+        team.tasks[round] = tasks.map(task => ({
+            title: task.title,
+            description: task.description || '',
+            visible: task.visible || false
+        }));
+
+        await team.save();
+
+        res.json({
+            success: true,
+            message: `Tasks updated for ${round}`,
+            data: team.tasks[round]
+        });
+    } catch (error) {
+        console.error('Update tasks error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// @route   POST /api/evaluator/teams/:teamId/publish/:round
+// @desc    Publish tasks to make them visible to team lead (Student Evaluators only)
+// @access  Evaluator (Student)
+router.post('/teams/:teamId/publish/:round', async (req, res) => {
+    try {
+        if (req.user.evaluatorType !== 'student') {
+            return res.status(403).json({ success: false, message: 'Only student evaluators can publish tasks' });
+        }
+
+        const { teamId, round } = req.params;
+
+        const validRounds = ['round1', 'round2', 'round3', 'round4'];
+        if (!validRounds.includes(round)) {
+            return res.status(400).json({ success: false, message: 'Invalid round' });
+        }
+
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).json({ success: false, message: 'Team not found' });
+        }
+
+        if (req.user.domain && team.domain !== req.user.domain) {
+            return res.status(403).json({ success: false, message: 'This team is not in your assigned domain' });
+        }
+
+        if (!team.tasks?.[round] || team.tasks[round].length === 0) {
+            return res.status(400).json({ success: false, message: 'No tasks found for this round to publish' });
+        }
+
+        // Make all tasks in the round visible
+        team.tasks[round] = team.tasks[round].map(task => ({
+            ...task.toObject(),
+            visible: true
+        }));
+
+        await team.save();
+
+        res.json({
+            success: true,
+            message: `${round} tasks published for team ${team.teamName}`,
+            data: team.tasks[round]
+        });
+    } catch (error) {
+        console.error('Publish tasks error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

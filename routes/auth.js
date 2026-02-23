@@ -79,6 +79,7 @@ router.post('/login',
                     email: user.email,
                     role: user.role,
                     teamId: user.teamId,
+                    evaluatorType: user.evaluatorType,
                     token: generateToken(user._id)
                 }
             });
