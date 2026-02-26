@@ -377,4 +377,81 @@ router.get('/leaderboard', async (req, res) => {
     }
 });
 
+// Helper function to format CSV field safely
+const escapeCsvField = (field) => {
+    if (field === null || field === undefined) return 'N/A';
+    const stringField = String(field);
+    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+        return `"${stringField.replace(/"/g, '""')}"`;
+    }
+    return stringField;
+};
+
+// @route   GET /api/admin/export/:type
+// @desc    Export team scores to CSV
+// @access  Admin
+router.get('/export/:type', async (req, res) => {
+    try {
+        const { type } = req.params;
+        const validTypes = ['round1', 'round2', 'round3', 'round4', 'final'];
+
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({ success: false, message: 'Invalid export type' });
+        }
+
+        const teams = await Team.find()
+            .populate('leadId', 'name email')
+            .sort({ totalScore: -1 });
+
+        let csvContent = '';
+
+        if (type === 'final') {
+            csvContent += 'S.No,Team Name,Domain,Round 1 Score,Round 2 Score,Round 3 Score,Round 4 Score,Total Score\n';
+            teams.forEach((team, index) => {
+                const sNo = index + 1;
+                const r1 = team.scores?.round1?.finalScore ?? '0';
+                const r2 = team.scores?.round2?.finalScore ?? '0';
+                const r3 = team.scores?.round3?.finalScore ?? '0';
+                const r4 = team.scores?.round4?.finalScore ?? '0';
+
+                csvContent += `${sNo},${escapeCsvField(team.teamName)},${escapeCsvField(team.domain)},${r1},${r2},${r3},${r4},${team.totalScore}\n`;
+            });
+        } else {
+            // Round specific
+            csvContent += 'S.No,Team Name,Domain,Faculty Evaluator Score,Student Evaluator Score,Cumulative Score\n';
+            teams.forEach((team, index) => {
+                const sNo = index + 1;
+                const roundData = team.scores?.[type];
+
+                let facultyScore = 'N/A';
+                let studentScore = 'N/A';
+                let cumulativeScore = roundData?.finalScore ?? '0';
+
+                if (roundData?.evaluations) {
+                    const studentEval = roundData.evaluations.find(e => e.evaluatorType === 'student');
+                    const staffEvals = roundData.evaluations.filter(e => e.evaluatorType === 'staff');
+
+                    if (studentEval) studentScore = studentEval.score;
+                    if (staffEvals.length > 0) {
+                        const sum = staffEvals.reduce((acc, curr) => acc + curr.score, 0);
+                        facultyScore = (sum / staffEvals.length).toFixed(2);
+                    }
+                }
+
+                csvContent += `${sNo},${escapeCsvField(team.teamName)},${escapeCsvField(team.domain)},${facultyScore},${studentScore},${cumulativeScore}\n`;
+            });
+        }
+
+        // Set headers for file download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=prajwalan_${type}_results.csv`);
+
+        res.status(200).send(csvContent);
+
+    } catch (error) {
+        console.error('CSV Export error:', error);
+        res.status(500).json({ success: false, message: 'Server error during export' });
+    }
+});
+
 module.exports = router;
