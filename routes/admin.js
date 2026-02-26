@@ -413,32 +413,106 @@ router.get('/export/:type', async (req, res) => {
                 const r2 = team.scores?.round2?.finalScore ?? '0';
                 const r3 = team.scores?.round3?.finalScore ?? '0';
                 const r4 = team.scores?.round4?.finalScore ?? '0';
-
                 csvContent += `${sNo},${escapeCsvField(team.teamName)},${escapeCsvField(team.domain)},${r1},${r2},${r3},${r4},${team.totalScore}\n`;
             });
         } else {
-            // Round specific
-            csvContent += 'S.No,Team Name,Domain,Faculty Evaluator Score,Student Evaluator Score,Cumulative Score\n';
+            // Parameter definitions per round (must match frontend)
+            const roundParameters = {
+                round1: ['Idea', 'Product Potential', 'Innovation', 'Social Significance', 'Sustainability'],
+                round2: ['Implementation', 'Task Completion', 'Presentation', 'Tech Stack', 'Team Work'],
+                round3: ['Amount of Completion', 'Presentation', 'Working', 'Tasks', 'UI/UX', 'Future Scope'],
+                round4: [] // Flash round – no parameters
+            };
+
+            const params = roundParameters[type] || [];
+
+            // Build CSV header
+            const facultyParamHeaders = params.map(p => `faculty_${p}`);
+            const studentParamHeaders = params.map(p => `student_${p}`);
+
+            if (params.length > 0) {
+                csvContent += [
+                    'S.No', 'Team Name', 'Domain',
+                    'Faculty Total (avg)', ...facultyParamHeaders,
+                    'Student Total', ...studentParamHeaders,
+                    'Cumulative Score'
+                ].join(',') + '\n';
+            } else {
+                // Flash round – no parameters
+                csvContent += 'S.No,Team Name,Domain,Faculty Score,Student Score,Cumulative Score\n';
+            }
+
             teams.forEach((team, index) => {
                 const sNo = index + 1;
                 const roundData = team.scores?.[type];
+                const evaluations = roundData?.evaluations || [];
+                const cumulativeScore = roundData?.finalScore ?? 'N/A';
 
-                let facultyScore = 'N/A';
-                let studentScore = 'N/A';
-                let cumulativeScore = roundData?.finalScore ?? '0';
+                const staffEvals = evaluations.filter(e => e.evaluatorType === 'staff');
+                const studentEval = evaluations.find(e => e.evaluatorType === 'student');
 
-                if (roundData?.evaluations) {
-                    const studentEval = roundData.evaluations.find(e => e.evaluatorType === 'student');
-                    const staffEvals = roundData.evaluations.filter(e => e.evaluatorType === 'staff');
+                if (params.length > 0) {
+                    // --- Per-parameter averages for faculty ---
+                    const facultyTotals = {};
+                    params.forEach(p => { facultyTotals[p] = 0; });
 
-                    if (studentEval) studentScore = studentEval.score;
                     if (staffEvals.length > 0) {
-                        const sum = staffEvals.reduce((acc, curr) => acc + curr.score, 0);
-                        facultyScore = (sum / staffEvals.length).toFixed(2);
+                        staffEvals.forEach(ev => {
+                            const paramMap = ev.parameters instanceof Map
+                                ? Object.fromEntries(ev.parameters)
+                                : (ev.parameters || {});
+                            params.forEach(p => {
+                                facultyTotals[p] += Number(paramMap[p] || 0);
+                            });
+                        });
+                        params.forEach(p => {
+                            facultyTotals[p] = parseFloat((facultyTotals[p] / staffEvals.length).toFixed(2));
+                        });
                     }
-                }
 
-                csvContent += `${sNo},${escapeCsvField(team.teamName)},${escapeCsvField(team.domain)},${facultyScore},${studentScore},${cumulativeScore}\n`;
+                    const facultyTotal = staffEvals.length > 0
+                        ? parseFloat((staffEvals.reduce((s, e) => s + e.score, 0) / staffEvals.length).toFixed(2))
+                        : 'N/A';
+
+                    // --- Per-parameter values for student ---
+                    const studentParamValues = {};
+                    params.forEach(p => { studentParamValues[p] = 'N/A'; });
+                    const studentTotal = studentEval ? studentEval.score : 'N/A';
+
+                    if (studentEval) {
+                        const paramMap = studentEval.parameters instanceof Map
+                            ? Object.fromEntries(studentEval.parameters)
+                            : (studentEval.parameters || {});
+                        params.forEach(p => {
+                            studentParamValues[p] = paramMap[p] !== undefined ? paramMap[p] : 'N/A';
+                        });
+                    }
+
+                    const facultyParamValues = params.map(p =>
+                        staffEvals.length > 0 ? facultyTotals[p] : 'N/A'
+                    );
+                    const studentParamCols = params.map(p => studentParamValues[p]);
+
+                    csvContent += [
+                        sNo,
+                        escapeCsvField(team.teamName),
+                        escapeCsvField(team.domain),
+                        facultyTotal,
+                        ...facultyParamValues,
+                        studentTotal,
+                        ...studentParamCols,
+                        cumulativeScore
+                    ].join(',') + '\n';
+
+                } else {
+                    // Flash round
+                    const facultyScore = staffEvals.length > 0
+                        ? parseFloat((staffEvals.reduce((s, e) => s + e.score, 0) / staffEvals.length).toFixed(2))
+                        : 'N/A';
+                    const studentScore = studentEval ? studentEval.score : 'N/A';
+
+                    csvContent += `${sNo},${escapeCsvField(team.teamName)},${escapeCsvField(team.domain)},${facultyScore},${studentScore},${cumulativeScore}\n`;
+                }
             });
         }
 
