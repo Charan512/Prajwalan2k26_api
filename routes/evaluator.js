@@ -176,7 +176,8 @@ router.post('/teams/:teamId/score/:round',
             }
 
             // Check if this evaluator has already scored this round
-            const existingEvaluationIndex = team.scores[round].evaluations.findIndex(
+            const evaluations = team.scores[round]?.evaluations || [];
+            const existingEvaluationIndex = evaluations.findIndex(
                 e => e.evaluatorId.toString() === req.user._id.toString()
             );
 
@@ -198,6 +199,9 @@ router.post('/teams/:teamId/score/:round',
                 });
             } else {
                 // Add new evaluation
+                if (!team.scores[round].evaluations) {
+                    team.scores[round].evaluations = [];
+                }
                 team.scores[round].evaluations.push(newEvaluation);
             }
 

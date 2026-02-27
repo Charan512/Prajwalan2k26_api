@@ -39,6 +39,7 @@ const allowedOrigins = [
   process.env.TIMER_URL,
   'http://localhost:5173',
   'http://localhost:5174',
+  'https://finale.prajwalan-2k26.tech'
 ].filter(Boolean);
 
 app.use(cors({
@@ -46,10 +47,15 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.includes('localhost') ||
+      origin.includes('prajwalan') ||
+      origin.includes('vercel.app')
+    ) {
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(new Error('Not allowed by CORS: ' + origin));
     }
   },
   credentials: true,
