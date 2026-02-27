@@ -191,8 +191,11 @@ router.post('/teams/:teamId/score/:round',
             };
 
             if (existingEvaluationIndex !== -1) {
-                // Update existing evaluation
-                team.scores[round].evaluations[existingEvaluationIndex] = newEvaluation;
+                // Reject update if already evaluated
+                return res.status(400).json({
+                    success: false,
+                    message: 'You have already submitted an evaluation for this round. Modifying submitted scores is not allowed.'
+                });
             } else {
                 // Add new evaluation
                 team.scores[round].evaluations.push(newEvaluation);
