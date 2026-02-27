@@ -16,6 +16,7 @@ router.get('/profile', async (req, res) => {
         res.json({
             success: true,
             data: {
+                _id: req.user._id,
                 name: req.user.name,
                 email: req.user.email,
                 domain: req.user.domain
