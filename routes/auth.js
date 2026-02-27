@@ -22,7 +22,7 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/login',
     [
-        body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+        body('email').isEmail().withMessage('Please provide a valid email'),
         body('password').notEmpty().withMessage('Password is required')
             .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
     ],
