@@ -53,8 +53,17 @@ router.post('/score', protect, async (req, res) => {
     try {
         let { teamId, score } = req.body;
 
-        // Auto-assign teamId from logged-in user if not provided
-        if (!teamId && req.user && req.user.teamId) {
+        // Security Patch 1: Cap the maximum score to 50000 to prevent 9999999 exploits
+        if (score > 50000) {
+            score = 50000;
+        }
+
+        // Security Patch 2: Prevent IDOR (Insecure Direct Object Reference)
+        // If the user is NOT an admin, forcefully assign teamId to their own team,
+        // completely ignoring any malicious teamId they might have tried to pass in the body.
+        if (req.user && req.user.role !== 'admin') {
+            teamId = req.user.teamId;
+        } else if (!teamId && req.user && req.user.teamId) {
             teamId = req.user.teamId;
         }
 
